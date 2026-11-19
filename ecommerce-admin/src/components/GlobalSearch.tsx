@@ -27,10 +27,11 @@ export default function GlobalSearch() {
 
   const hasResults = results.orders.length > 0 || results.products.length > 0;
 
-  const go = (path: string) => {
-    navigate(path);
+  // Sends the clicked item's name as a query param so the target page shows only that item
+  const go = (path: string, term: string) => {
+    navigate(`${path}?q=${encodeURIComponent(term)}`);
     setOpen(false);
-    setQuery("");
+    setQuery(""); // header box is cleared, the page's own search box shows the term
   };
 
   return (
@@ -58,7 +59,7 @@ export default function GlobalSearch() {
               {results.products.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => go("/products")}
+                  onClick={() => go("/products", p.name)}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   <Package size={16} className="shrink-0 text-slate-400" />
@@ -75,7 +76,7 @@ export default function GlobalSearch() {
               {results.orders.map((o) => (
                 <button
                   key={o.id}
-                  onClick={() => go("/orders")}
+                  onClick={() => go("/orders", o.id)}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   <ShoppingCart size={16} className="shrink-0 text-slate-400" />

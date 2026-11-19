@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, X } from "lucide-react";
 import { orders } from "../data/mock";
 import type { OrderStatus } from "../types";
 
@@ -30,8 +31,15 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 export default function RecentOrders({ title = "Recent Orders" }: { title?: string }) {
-  const [query, setQuery] = useState("");
+  const [params, setSearchParams] = useSearchParams();
+  // Start with the search text from the URL (for example /orders?q=%23ORD-1042)
+  const [query, setQuery] = useState(params.get("q") ?? "");
   const [status, setStatus] = useState<"All" | OrderStatus>("All");
+
+  // Keep the search box in sync when the URL changes (for example from the header search)
+  useEffect(() => {
+    setQuery(params.get("q") ?? "");
+  }, [params]);
 
   // Derived from state on every render
   const filtered = orders.filter(
@@ -39,6 +47,11 @@ export default function RecentOrders({ title = "Recent Orders" }: { title?: stri
       (status === "All" || o.status === status) &&
       (o.customer.toLowerCase().includes(query.toLowerCase()) || o.id.toLowerCase().includes(query.toLowerCase()))
   );
+
+  const clearSearch = () => {
+    setQuery("");
+    setSearchParams({}); // also remove ?q= from the URL
+  };
 
   return (
     <div className="animate-fade-up min-w-0 rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-slate-900">
@@ -52,8 +65,17 @@ export default function RecentOrders({ title = "Recent Orders" }: { title?: stri
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search orders..."
-              className="w-full rounded-xl border border-slate-200 bg-transparent py-2 pl-9 pr-3 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10"
+              className="w-full rounded-xl border border-slate-200 bg-transparent py-2 pl-9 pr-9 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10"
             />
+            {query && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
           <select
             value={status}
