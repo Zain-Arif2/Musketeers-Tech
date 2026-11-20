@@ -8,9 +8,13 @@ const server = app.listen(port, () => {
   console.log(`API running on http://localhost:${port}`);
 });
 
-// Close the database connection when the server stops
-process.on("SIGINT", async () => {
-  server.close();
-  await prisma.$disconnect();
-  process.exit(0);
-});
+// Close the database connection when the server stops gracefully
+const shutdown = async () => {
+  server.close(async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

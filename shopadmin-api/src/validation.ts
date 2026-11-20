@@ -24,8 +24,8 @@ export function parseProduct(body: unknown) {
 // Validates the :id route parameter
 export function parseId(raw: string | string[] | undefined) {
   const id = Number(raw);
-  if (!Number.isInteger(id) || id < 1) {
-    throw new HttpError(400, "Product id must be a positive integer");
+  if (!Number.isInteger(id) || id < 1 || id > 2_147_483_647) {
+    throw new HttpError(400, "Product id must be a positive integer within valid 32-bit range");
   }
   return id;
 }

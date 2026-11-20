@@ -21,13 +21,20 @@ const toDto = (p: Product) => ({ ...p, price: Number(p.price) });
 router.get(
   "/",
   wrap(async (req, res) => {
-    const category = typeof req.query.category === "string" ? req.query.category : undefined;
-    const search = typeof req.query.search === "string" ? req.query.search : undefined;
+    const rawCategory = typeof req.query.category === "string" ? req.query.category.trim() : undefined;
+    const category = rawCategory && rawCategory.toLowerCase() !== "all" ? rawCategory : undefined;
+    const rawSearch = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+    const search = rawSearch ? rawSearch : undefined;
 
     const products = await prisma.product.findMany({
       where: {
         ...(category && { category }),
-        ...(search && { name: { contains: search, mode: "insensitive" } }),
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+          ],
+        }),
       },
       orderBy: { id: "asc" },
     });
