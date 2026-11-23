@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { DollarSign, ShoppingCart, Package, AlertTriangle } from "lucide-react";
 import StatCard from "../components/StatCard";
 import SalesChart from "../components/SalesChart";
 import RecentOrders from "../components/RecentOrders";
-import { salesData, products, orders, monthlyChange } from "../data/mock";
+import { salesData, orders, monthlyChange } from "../data/mock";
 import { useFakeLoading } from "../hooks/useFakeLoading";
+import { productsApi } from "../api/products";
+import type { Product } from "../types";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-2xl bg-slate-200/70 dark:bg-white/5 ${className}`} />;
@@ -11,13 +14,26 @@ function Skeleton({ className = "" }: { className?: string }) {
 
 export default function Dashboard() {
   const loading = useFakeLoading();
+  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
 
-  // Everything below is calculated from the mock data only
+  useEffect(() => {
+    productsApi
+      .getAll()
+      .then((data) => setLiveProducts(data))
+      .catch(() => {
+        // In case API is offline, gracefully remain empty
+      });
+  }, []);
+
   const revenueSeries = salesData.map((d) => d.revenue);
   const orderSeries = salesData.map((d) => d.orders);
   const totalRevenue = revenueSeries.reduce((a, b) => a + b, 0);
   const totalOrders = orderSeries.reduce((a, b) => a + b, 0);
-  const lowStockCount = products.filter((p) => p.stock <= 10).length;
+
+  // Computed from real database products
+  const productCount = liveProducts.length;
+  const inStockCount = liveProducts.filter((p) => p.stock > 0).length;
+  const lowStockCount = liveProducts.filter((p) => p.stock <= 10).length;
   const pendingOrders = orders.filter((o) => o.status === "Processing").length;
 
   return (
@@ -58,10 +74,10 @@ export default function Dashboard() {
             />
             <StatCard
               title="Products"
-              value={String(products.length)}
+              value={String(productCount)}
               icon={Package}
               color="#f59e0b"
-              note={`${products.filter((p) => p.stock > 0).length} in stock`}
+              note={`${inStockCount} in stock`}
             />
             <StatCard
               title="Low / Out of Stock"

@@ -11,10 +11,33 @@ export interface Order {
 export interface Product {
   id: number;
   name: string;
+  description?: string;
   category: string;
   price: number;
   stock: number;
-  image: string;
+  imageUrl?: string;
+  image?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProductInput {
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+  stock: number;
+  imageUrl: string;
+}
+
+export interface ApiValidationErrorDetail {
+  field: string;
+  message: string;
+}
+
+export interface ApiErrorResponse {
+  error: string;
+  details?: ApiValidationErrorDetail[];
 }
 
 export interface SalesPoint {

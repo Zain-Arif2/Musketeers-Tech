@@ -1,29 +1,39 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Package, ShoppingCart } from "lucide-react";
-import { orders, products } from "../data/mock";
+import { orders } from "../data/mock";
+import { productsApi } from "../api/products";
+import type { Product } from "../types";
 import { useClickOutside } from "../hooks/useClickOutside";
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false));
 
+  useEffect(() => {
+    productsApi
+      .getAll()
+      .then((data) => setLiveProducts(data))
+      .catch(() => {});
+  }, []);
+
   const q = query.trim().toLowerCase();
 
-  // Derived from the query, no separate results state
+  // Derived from the query, searches real live products
   const results = useMemo(() => {
     if (!q) return { orders: [], products: [] };
     return {
       orders: orders
         .filter((o) => o.customer.toLowerCase().includes(q) || o.id.toLowerCase().includes(q))
         .slice(0, 4),
-      products: products
+      products: liveProducts
         .filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
         .slice(0, 4),
     };
-  }, [q]);
+  }, [q, liveProducts]);
 
   const hasResults = results.orders.length > 0 || results.products.length > 0;
 

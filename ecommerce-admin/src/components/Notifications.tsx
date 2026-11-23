@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, AlertTriangle, ShoppingCart } from "lucide-react";
-import { orders, products } from "../data/mock";
+import { orders } from "../data/mock";
+import { productsApi } from "../api/products";
+import type { Product } from "../types";
 import { useClickOutside } from "../hooks/useClickOutside";
 
 interface Notice {
@@ -12,33 +14,41 @@ interface Notice {
   kind: "stock" | "order";
 }
 
-// Notifications are built from the mock data only
-const allNotices: Notice[] = [
-  ...products
-    .filter((p) => p.stock <= 10)
-    .map<Notice>((p) => ({
-      id: `p-${p.id}`,
-      title: p.stock === 0 ? `${p.name} is out of stock` : `${p.name} is low on stock`,
-      detail: p.stock === 0 ? "Restock needed" : `${p.stock} units left`,
-      to: "/products",
-      kind: "stock",
-    })),
-  ...orders
-    .filter((o) => o.status === "Processing")
-    .map<Notice>((o) => ({
-      id: `o-${o.id}`,
-      title: `Order ${o.id} is processing`,
-      detail: `${o.customer} · $${o.total.toFixed(2)}`,
-      to: "/orders",
-      kind: "order",
-    })),
-];
-
 export default function Notifications() {
   const [open, setOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
+  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false));
+
+  useEffect(() => {
+    productsApi
+      .getAll()
+      .then((data) => setLiveProducts(data))
+      .catch(() => {});
+  }, []);
+
+  // Notifications built from live products + order data
+  const allNotices: Notice[] = [
+    ...liveProducts
+      .filter((p) => p.stock <= 10)
+      .map<Notice>((p) => ({
+        id: `p-${p.id}`,
+        title: p.stock === 0 ? `${p.name} is out of stock` : `${p.name} is low on stock`,
+        detail: p.stock === 0 ? "Restock needed" : `${p.stock} units left`,
+        to: "/products",
+        kind: "stock",
+      })),
+    ...orders
+      .filter((o) => o.status === "Processing")
+      .map<Notice>((o) => ({
+        id: `o-${o.id}`,
+        title: `Order ${o.id} is processing`,
+        detail: `${o.customer} · $${o.total.toFixed(2)}`,
+        to: "/orders",
+        kind: "order",
+      })),
+  ];
 
   // Unread count is derived, not stored
   const unread = allNotices.filter((n) => !readIds.includes(n.id)).length;

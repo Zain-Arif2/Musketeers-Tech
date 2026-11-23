@@ -14,8 +14,8 @@ const wrap =
     fn(req, res).catch(next);
   };
 
-// Prisma returns Decimal for price, so convert it to a normal number for JSON
-const toDto = (p: Product) => ({ ...p, price: Number(p.price) });
+// Prisma returns Decimal for price, so convert it to a normal number for JSON, and expose image alias for frontend
+const toDto = (p: Product) => ({ ...p, price: Number(p.price), image: p.imageUrl });
 
 // GET /api/products  (optional filters: ?category=Home&search=mug)
 router.get(
